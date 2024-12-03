@@ -1,0 +1,1054 @@
+Practical-1
+-----------
+- Write minimum three query to find out fragmentation in database. 
+- Derive your conclusion for the result of the query.
+
+
+Query 1: Free Space Distribution by Segment Type
+
+SELECT 
+    s.SEGMENT_TYPE,
+    SUM(fs.BLOCKS) AS TOTAL_FREE_BLOCKS
+FROM 
+    DBA_FREE_SPACE fs
+JOIN 
+    DBA_SEGMENTS s ON fs.TABLESPACE_NAME = s.TABLESPACE_NAME
+GROUP BY 
+    s.SEGMENT_TYPE;
+
+
+Query 2: Largest Free Blocks per Tablespace
+
+SELECT 
+    fs.TABLESPACE_NAME,
+    MAX(fs.BLOCKS) AS LARGEST_FREE_BLOCKS
+FROM 
+    DBA_FREE_SPACE fs
+GROUP BY 
+    fs.TABLESPACE_NAME;
+
+
+Query 3: Segments with Insufficient Free Space
+
+SELECT 
+    '********FREE********',
+    TABLESPACE_NAME,
+    BLOCK_ID,
+    BLOCKS
+FROM 
+    DBA_FREE_SPACE
+WHERE 
+    TABLESPACE_NAME = 'STUD'
+UNION
+SELECT 
+    '****USED****',
+    TABLESPACE_NAME,
+    BLOCK_ID,
+    BLOCKS
+FROM 
+    DBA_EXTENTS 
+WHERE 
+    TABLESPACE_NAME = 'STUD';
+
+
+
+
+1. Free Space Distribution by Segment Type: Summarizes the total free blocks available, grouped by segment type (e.g., tables, indexes).
+2. Largest Free Blocks per Tablespace: Identifies the largest contiguous free blocks available in each tablespace.
+3. Segments with Insufficient Free Space: Lists segments that have less free space than the number of blocks they occupy, indicating potential fragmentation.
+
+
+
+
+Practical-2
+-----------
+- Write a query to identify lock in the database and generate formatted output for better understanding.
+
+
+
+SELECT * FROM student_master
+WHERE stdid = 1
+FOR UPDATE;
+
+select sid, username from v$session;
+
+SELECT 
+    s.sid AS "Session ID",
+    s.serial# AS "Serial Number",
+    s.username AS "Username",
+    l.type AS "Lock Type",
+    l.lmode AS "Lock Mode",
+    l.request AS "Request Mode",
+    l.id1 AS "ID1 (Object ID)",
+    l.id2 AS "ID2 (Sub-object ID)"
+FROM 
+    v$session s
+JOIN 
+    v$lock l ON s.sid = l.sid
+WHERE 
+    s.sid = 251;
+
+COMMIT;  or ROLLBACK;
+
+
+LOCK TABLE student_master IN EXCLUSIVE MODE;
+
+
+SELECT * FROM student_master
+WHERE stdid = 1
+FOR UPDATE;
+
+select sid, username from v$session;
+
+SELECT 
+    s.sid AS "Session ID",
+    s.serial# AS "Serial Number",
+    s.username AS "Username",
+    l.type AS "Lock Type",
+    l.lmode AS "Lock Mode",
+    o.object_name AS "Locked Table",
+    l.id1 AS "ID1 (Object ID)",
+    l.id2 AS "ID2 (Sub-object ID)"
+FROM 
+    v$session s
+JOIN 
+    v$lock l ON s.sid = l.sid
+JOIN 
+    dba_objects o ON l.id1 = o.object_id
+WHERE 
+    l.type = 'TM' and s.sid = 251;
+
+COMMIT;  or ROLLBACK;
+
+
+
+TX: Transactional lock
+Row: Row-level lock
+Table: Table-level lock
+
+0: No lock
+1: Null
+2: Row-S, Shared row lock
+3: Row-X, Exclusive row lock
+4: Share lock
+5: Exclusive lock
+
+
+
+
+Practical-3
+-----------
+- Write a query to identify latch contention in the database and format output for better understanding.
+
+
+SELECT 
+    name, gets, misses, sleeps, immediate_gets, immediate_misses 
+FROM 
+    v$latch 
+WHERE 
+    name like 'shared pool' OR name like '%library cache%' OR name like '%redo log%' OR name like '%cache buffer%';
+
+select m.value/(m.value+d.value) "sort ratio" from v$sysstat m, v$sysstat d where m.name='sorts (memory)' and d.name='sorts (disk)';
+
+
+
+
+Practical-4
+-----------
+- Write query to find out hit ratio for the data buffer cache and write your conclusion.​
+ 
+SELECT
+  (1 - (v3.value / (v1.value + v2.value))) * 100 AS data_buffer_cache_hit_ratio
+FROM 
+  v$sysstat v1,
+  v$sysstat v2,
+  v$sysstat v3
+WHERE 
+  v1.name = 'db block gets'
+AND 
+  v2.name = 'consistent gets'
+AND  
+  v3.name = 'physical reads';
+
+				 
+Conclusion: A hit ratio of data buffer cache (above 95%) indicates that the cache is effective. The hit ratio for the data buffer cache  should be > 95%. 
+            If it is less than 95% then we need to resize the database buffer cache.
+
+
+
+
+
+Practical-5
+-----------
+- Write different queries to find out hit ratio for the shared pool area and redo log each.
+
+Shared Pool Hit Ratio = (1 - (session cursor cache misses + parse count (hard)) / parse count (total)) * 100
+
+Redo Log Buffer Hit Ratio = (1 - (redo buffer allocation retries / redo entries)) * 100
+
+
+Shared Pool Hit Ratio 
+-------------------------------------------------
+SELECT 
+    round((1 - (sum(pinhits) / sum(pins))) * 100, 2) AS "shared pool hit ratio"
+FROM 
+    v$librarycache;
+    
+
+Redo Log Buffer Hit Ratio
+-------------------------------------------------
+
+SELECT
+    (1 - (r.value / e.value)) * 100 as redo_log_hit_ratio
+FROM 
+    v$sysstat r, v$sysstat e
+WHERE  
+    r.name = 'redo log space requests'
+AND    
+    e.name = 'redo entries';
+
+WITH stats AS (
+  SELECT 
+    sum(case when name = 'redo entries' then value else 0 end) AS redo_entries,
+    sum(case when name = 'redo wastage' then value else 0 end) AS redo_wastage
+  FROM v$sysstat
+) SELECT 
+  ROUND((1 - (redo_wastage / redo_entries)) * 100, 2) AS "redo log hit ratio"
+FROM stats;
+
+
+Conclusion: These ratios should be above 90% for optimal performance.
+
+
+
+
+
+Practical-6
+-----------
+- Write a query to find out what will be the execution plan of the query.
+- Derive all the steps.
+
+
+EXPLAIN PLAN 
+SET STATEMENT_ID = 'StudentData'
+FOR 
+SELECT * FROM student WHERE student_id > 5;
+
+SELECT id, 
+       statement_id,
+       plan_id,
+       operation,
+       options, 
+       object_name, 
+       object_alias, 
+       position,
+       parent_id,
+       cpu_cost,
+       io_cost
+FROM plan_table 
+START WITH id = 0 AND statement_id = 'StudentData' 
+CONNECT BY PRIOR id = parent_id 
+ORDER BY id;
+
+
+DELETE FROM plan_table;
+
+COLUMN position FORMAT A20
+COLUMN object_alias FORMAT A20
+COLUMN object_name FORMAT A20
+COLUMN options FORMAT A30
+COLUMN operation FORMAT A20
+
+
+
+
+
+Practical-7
+-----------
+- Write a query to find out sort area contention in data base and give right solution as a dba.
+
+SELECT 
+    m.name, d.name, m.value / (m.value + d.value) AS "sort ratio"
+FROM 
+    v$sysstat m, 
+    v$sysstat d
+WHERE 
+    m.name = 'sorts (memory)'
+AND 
+    d.name = 'sorts (disk)';
+
+SELECT 
+    ROUND(m.value / (m.value + d.value), 2) AS "Sort Area Contention Hit Ratio"
+FROM 
+    v$sysstat m,
+    v$sysstat d
+WHERE 
+    m.name = 'sorts (memory)' 
+    AND d.name = 'sorts (disk)';
+
+
+
+
+
+
+
+
+Practical-8
+-----------
+- Write a procedure to update, delete and insert new element in varray.
+
+
+CREATE OR REPLACE TYPE student_marks AS VARRAY(3) OF NUMBER;
+
+CREATE TABLE STUDENT (
+    student_id NUMBER PRIMARY KEY,
+    student_name VARCHAR2(100),
+    marks student_marks
+) 
+STORAGE (
+    INITIAL 1000        
+    NEXT 100           
+    MINEXTENTS 1       
+    MAXEXTENTS 2 
+);
+
+
+INSERT INTO STUDENT (student_id, student_name, marks) VALUES (1, 'keyuri', student_marks(85, 90, 78));
+INSERT INTO STUDENT (student_id, student_name, marks) VALUES (2, 'yashvi', student_marks(88, 92, 80));
+INSERT INTO STUDENT (student_id, student_name, marks) VALUES (3, 'jainil', student_marks(88, 80));
+
+
+CREATE OR REPLACE TYPE student_marks AS VARRAY(3) OF NUMBER;
+/
+
+CREATE OR REPLACE PROCEDURE manage_marks(
+    sid IN NUMBER,
+    action IN VARCHAR2,
+    mark IN NUMBER,
+    updated_mark IN NUMBER DEFAULT NULL
+)
+IS
+    current_marks student_marks;
+    new_marks student_marks := student_marks();
+    found BOOLEAN := FALSE;
+BEGIN
+    SELECT marks INTO current_marks FROM STUDENT WHERE student_id = sid;
+
+    IF action = 'insert' THEN
+        IF current_marks.COUNT < 3 THEN
+            current_marks.EXTEND;
+            current_marks(current_marks.LAST) := mark;
+            UPDATE STUDENT SET marks = current_marks WHERE student_id = sid;
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('Cannot insert: maximum marks reached.');
+        END IF;
+
+    ELSIF action = 'update' THEN
+        FOR i IN 1..current_marks.COUNT LOOP
+            IF current_marks(i) = mark THEN
+                current_marks(i) := updated_mark;
+                found := TRUE;
+                UPDATE STUDENT SET marks = current_marks WHERE student_id = sid;
+                EXIT;
+            END IF;
+        END LOOP;
+        
+        IF NOT found THEN
+            DBMS_OUTPUT.PUT_LINE('Mark not found for update.');
+        END IF;
+
+    ELSIF action = 'delete' THEN
+        FOR i IN 1..current_marks.COUNT LOOP
+            IF current_marks(i) != mark THEN
+                new_marks.EXTEND;
+                new_marks(new_marks.COUNT) := current_marks(i);
+            END IF;
+        END LOOP;
+        
+        UPDATE STUDENT SET marks = new_marks WHERE student_id = sid;
+    END IF;
+END;
+/
+
+
+BEGIN
+    manage_marks(2, 'update', 92, 95); 
+END;
+/
+BEGIN
+    manage_marks(1, 'insert', 60);  
+END;
+/
+BEGIN
+    manage_marks(1, 'delete', 85);  
+END;
+/
+
+
+
+EXEC manage_marks(2, 'update', 92, 95);
+
+EXEC manage_marks(1, 'insert', 60);
+
+EXEC manage_marks(1, 'delete', 85);
+
+
+
+
+
+
+Practical-9
+-----------
+- Write a procedure to update, delete and insert new element in nested table.
+
+
+CREATE TABLE TEACHER (
+    teacher_id NUMBER PRIMARY KEY,
+    teacher_name VARCHAR2(100),
+    addresses address_tbl
+) NESTED TABLE addresses STORE AS addresses_nt
+STORAGE (
+    INITIAL 1000        
+    NEXT 100           
+    MINEXTENTS 1       
+    MAXEXTENTS 2 
+);
+
+
+CREATE OR REPLACE TYPE address_rec AS OBJECT (
+    block VARCHAR2(50),
+    block_no VARCHAR2(10),
+    area VARCHAR2(100),
+    pincode NUMBER
+);
+/ 
+
+CREATE OR REPLACE TYPE address_tbl AS TABLE OF address_rec;
+/ 
+
+
+CREATE OR REPLACE PROCEDURE manage_teacher_address (
+    p_teacher_id IN NUMBER,
+    p_action IN VARCHAR2,
+    p_index IN INTEGER DEFAULT NULL,
+    p_block IN VARCHAR2 DEFAULT NULL,
+    p_block_no IN VARCHAR2 DEFAULT NULL,
+    p_area IN VARCHAR2 DEFAULT NULL,
+    p_pincode IN NUMBER DEFAULT NULL
+) AS
+    v_addresses address_tbl;  
+BEGIN
+    SELECT addresses INTO v_addresses FROM TEACHER WHERE teacher_id = p_teacher_id;
+
+    IF p_action = 'INSERT' THEN
+        v_addresses.EXTEND;
+        v_addresses(v_addresses.COUNT) := address_rec(p_block, p_block_no, p_area, p_pincode);
+
+    ELSIF p_action = 'UPDATE' THEN
+        IF p_index IS NOT NULL AND p_index BETWEEN 1 AND v_addresses.COUNT THEN
+            v_addresses(p_index) := address_rec(p_block, p_block_no, p_area, p_pincode);
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('Invalid index for update.');
+        END IF;
+
+    ELSIF p_action = 'DELETE' THEN
+        IF p_index IS NOT NULL AND p_index BETWEEN 1 AND v_addresses.COUNT THEN
+            v_addresses.DELETE(p_index);
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('Invalid index for deletion.');
+        END IF;
+    END IF;
+
+    UPDATE TEACHER
+    SET addresses = v_addresses
+    WHERE teacher_id = p_teacher_id;
+END;
+
+
+
+INSERT INTO TEACHER (teacher_id, teacher_name, addresses)
+VALUES (1, 'keyuri', address_tbl(
+        address_rec('Block A', '1', 'Gota', 382481),
+        address_rec('Block B', '2', 'Vandematram', 382481)
+    ));
+
+INSERT INTO TEACHER (teacher_id, teacher_name, addresses)
+VALUES (2, 'richi', address_tbl(
+        address_rec('Block C', '3', 'Vaishnov devi', 382421)
+    ));
+
+
+
+BEGIN
+    manage_teacher_address(1, 'UPDATE', 1, 'Block D', '1A', 'Nikol', 382401);
+END;
+/
+BEGIN
+    manage_teacher_address(1, 'INSERT', NULL, 'Block K', '4', 'Narol', 382142);
+END;
+/
+BEGIN
+    manage_teacher_address(2, 'DELETE', 1);  
+END;
+/
+
+
+EXEC manage_teacher_address(1, 'UPDATE', 1, 'Block D', '1A', 'Nikol', 382401);
+EXEC manage_teacher_address(1, 'INSERT', NULL, 'Block K', '4', 'Narol', 382142);
+EXEC manage_teacher_address(2, 'DELETE', 1);  
+
+
+
+
+
+Practical-10
+------------
+- Export full schema and Import in the scott schema of the database. 
+- And also explain each parameter with Export and Import. 
+- And Load external data into your schema with the help of all the three method.
+
+
+Export Command:
+expdp username/password@db schemas=your_schema directory=your_directory dumpfile=your_dumpfile.dmp logfile=your_logfile.log
+
+Import Command:
+impdp scott/password@db schemas=your_schema directory=your_directory dumpfile=your_dumpfile.dmp logfile=your_logfile.log
+
+expdp mca307/212308007@orcl19 DIRECTORY= DUMPFILE=your_schema.dmp SCHEMAS=scott
+
+open cmd 
+
+- exp
+- username: mca307
+- password: mca307
+
+- select option database, user, tables
+- yes
+- yes
+- write table name that haven't partition
+
+- imp
+- export user username: mca333
+- password: mca333
+
+- import user username:
+
+- write table name that want to import
+
+
+
+
+
+
+Practical-11
+------------
+- Find out fragmentation using DBMS_SPACE package and show out put.
+
+
+DECLARE
+   used_space      NUMBER;
+   table_space     NUMBER;
+   unused_space    NUMBER;
+BEGIN
+   DBMS_SPACE.SPACE_USAGE(
+      segment_owner   => 'MCA307',  
+      segment_name    => 'EMPLOYEE',     
+      segment_type    => 'TABLE',        
+      used_space      => used_space,     
+      table_space     => table_space,    
+      unused_space    => unused_space    
+   );
+   
+   DBMS_OUTPUT.PUT_LINE('Used Space: ' || used_space || ' bytes');
+   DBMS_OUTPUT.PUT_LINE('Table Space: ' || table_space || ' bytes');
+   DBMS_OUTPUT.PUT_LINE('Unused Space: ' || unused_space || ' bytes');
+END;
+/
+
+
+
+
+
+
+Practical-12
+------------
+- With the use of DBMS_DDL package recompile your all modified package or procedure in you schema.
+
+
+CREATE TABLE employee (
+    employee_id NUMBER PRIMARY KEY,
+    first_name VARCHAR2(50),
+    last_name VARCHAR2(50),
+    hire_date DATE,
+    salary NUMBER(8, 2)
+);
+
+CREATE OR REPLACE PROCEDURE ADD_EMPLOYEE(
+    p_employee_id IN NUMBER,
+    p_first_name IN VARCHAR2,
+    p_last_name IN VARCHAR2,
+    p_hire_date IN DATE,
+    p_salary IN NUMBER
+) AS
+BEGIN
+    INSERT INTO employee (employee_id, first_name, last_name, hire_date, salary)
+    VALUES (p_employee_id, p_first_name, p_last_name, p_hire_date, p_salary)
+END;
+/
+
+SELECT object_name, status, object_type
+FROM user_objects
+WHERE object_name = 'ADD_EMPLOYEE';
+
+SELECT text
+FROM user_source
+WHERE name = 'ADD_EMPLOYEE'
+ORDER BY line;
+
+CREATE OR REPLACE PROCEDURE ADD_EMPLOYEE(
+    p_employee_id IN NUMBER,
+    p_first_name IN VARCHAR2,
+    p_last_name IN VARCHAR2,
+    p_hire_date IN DATE,
+    p_salary IN NUMBER
+) AS
+BEGIN
+    INSERT INTO employee (employee_id, first_name, last_name, hire_date, salary)
+    VALUES (p_employee_id, p_first_name, p_last_name, p_hire_date, p_salary); 
+END;
+/
+
+BEGIN
+  DBMS_DDL.alter_compile('PROCEDURE','MCA307','ADD_EMPLOYEE');
+END;
+/
+
+BEGIN
+  FOR rec IN (SELECT object_name, object_type 
+              FROM user_objects 
+              WHERE object_type IN ('PACKAGE', 'PROCEDURE') 
+              AND status = 'INVALID') 
+  LOOP
+    DBMS_DDL.alter_compile(rec.object_type, USER, rec.object_name);
+  END LOOP;
+END;
+/
+
+ALTER PROCEDURE MCA307.ADD_EMPLOYEE COMPILE;
+
+EXEC add_employee(101, 'Keyuri', 'Patel', TO_DATE('2024-01-15', 'YYYY-MM-DD'), 50000);
+
+
+
+
+
+
+Practical-13
+------------
+- With the use of DBMS_DDL package analyz table , index and cluster in your schema. 
+
+create table dept(id number primary key,dept_nm varchar(20));
+
+create index idx on dept(dept_nm);
+
+insert into dept values(1,'computer-science');
+
+insert into dept values(2,'hindi');
+
+create cluster bookclt(std_id number)
+storage(initial 200
+        next 300k
+        minextents 2
+        maxextents 200);
+
+create table students(
+std_id number,
+name varchar(20)
+)cluster bookclt(std_id);
+
+create table books(
+book_id  number primary key,
+std_id number,
+book_name varchar(20)
+)cluster bookclt(std_id);
+
+create index cltidx on cluster bookclt;
+
+   
+insert into students values(1,'keyuri');
+insert into students values(2,'yashvi');
+
+insert into books values(1,1,'maths');
+insert into books values(2,2,'english');
+
+
+BEGIN
+     DBMS_DDL.ANALYZE_OBJECT('TABLE','MCA307','EMP','ESTIMATE');
+     DBMS_DDL.ANALYZE_OBJECT('INDEX','MCA307','IDX','ESTIMATE');
+     DBMS_DDL.ANALYZE_OBJECT('CLUSTER','MCA307','BOOKCLT','ESTIMATE');
+END;
+
+
+ANALYZE TABLE EMP COMPUTE STATISTICS;
+
+ANALYZE INDEX IDX COMPUTE STATISTICS;
+
+
+ANALYZE CLUSTER bookclt COMPUTE STATISTICS;
+
+SELECT 
+    cluster_name,
+   TABLESPACE_NAME ,
+   PCT_FREE ,
+    PCT_USED
+    FROM 
+    user_clusters
+WHERE cluster_name='bookclt' and owner='mca315';
+
+
+
+
+
+
+Practical-16
+------------
+- Implement dynamic sql using DBMS_SQL package.
+
+
+create or replace procedure manage_employee(p_operation in varchar2, p_empid in number, p_empnm in varchar2) is
+  v_sql varchar2(100);
+  v_cursor integer;
+  v_tablenm varchar2(50) := 'employees';
+  v_bindid number := p_empid;
+  v_bindnm varchar2(50) := p_empnm;
+begin
+  if p_operation = 'INSERT' then
+    v_sql := 'insert into ' || v_tablenm || ' (EMPLOYEE_ID, EMPLOYEE_NAME) values (:bindid, :bindnm)';
+    v_cursor := DBMS_SQL.open_cursor;
+    DBMS_SQL.parse(v_cursor, v_sql, DBMS_SQL.native);
+    DBMS_SQL.bind_variable(v_cursor, ':bindid', v_bindid);
+    DBMS_SQL.bind_variable(v_cursor, ':bindnm', v_bindnm);
+    DBMS_SQL.execute(v_cursor);
+    DBMS_SQL.close_cursor(v_cursor);
+    DBMS_OUTPUT.PUT_LINE('Record inserted successfully');
+  elsif p_operation = 'update' then
+    v_sql := 'update ' || v_tablenm || ' set EMPLOYEE_NAME = :bindnm where EMPLOYEE_ID = :bindid';
+    v_cursor := DBMS_SQL.open_cursor;
+    DBMS_SQL.parse(v_cursor, v_sql, DBMS_SQL.native);
+    DBMS_SQL.bind_variable(v_cursor, ':bindid', v_bindid);
+    DBMS_SQL.bind_variable(v_cursor, ':bindnm', v_bindnm);
+    DBMS_SQL.execute(v_cursor);
+    DBMS_SQL.close_cursor(v_cursor);
+    DBMS_OUTPUT.PUT_LINE('Record updated successfully');
+  elsif p_operation = 'delete' then
+    v_sql := 'delete from ' || v_tablenm || ' where EMPLOYEE_ID = :bindid';
+    v_cursor := DBMS_SQL.open_cursor;
+    DBMS_SQL.parse(v_cursor, v_sql, DBMS_SQL.native);
+    DBMS_SQL.bind_variable(v_cursor, ':bindid', v_bindid);
+    DBMS_SQL.execute(v_cursor);
+    DBMS_SQL.close_cursor(v_cursor);
+    DBMS_OUTPUT.PUT_LINE('Record deleted successfully');
+  else
+    DBMS_OUTPUT.PUT_LINE('Invalid operation. Please choose INSERT, UPDATE, or DELETE.');
+  end if;
+end;
+/
+
+
+create or replace procedure fetch_data(pid in number, eid out number, pnm out varchar2) is
+  v_sql varchar2(200);
+  v_cursor integer;
+  v_empid number;
+  v_empnm varchar2(50);
+begin
+  v_sql := 'select EMPLOYEE_ID, EMPLOYEE_NAME from EMPLOYEES where EMPLOYEE_ID = :bindid';
+  v_cursor := DBMS_SQL.open_cursor;
+  DBMS_SQL.parse(v_cursor, v_sql, DBMS_SQL.native);
+  DBMS_SQL.bind_variable(v_cursor, ':bindid', pid);
+  DBMS_SQL.define_column(v_cursor, 1, v_empid);
+  DBMS_SQL.define_column(v_cursor, 2, v_empnm);
+  DBMS_SQL.execute(v_cursor);
+  if DBMS_SQL.fetch_rows(v_cursor) > 0 then
+    DBMS_SQL.column_value(v_cursor, 1, eid);
+    DBMS_SQL.column_value(v_cursor, 2, pnm);
+  else
+    DBMS_OUTPUT.PUT_LINE('No data found for EMPLOYEE_ID: ' || pid);
+  end if;
+  DBMS_SQL.close_cursor(v_cursor);
+end;
+/
+
+
+DECLARE
+    emp_name VARCHAR2(100);
+    empid number;
+BEGIN
+    fetch_data(1000, empid, emp_name);
+    DBMS_OUTPUT.PUT_LINE('Employee ID: ' || empid); 
+    DBMS_OUTPUT.PUT_LINE('Employee Name: ' || emp_name); 
+    
+    manage_employee('INSERT', 1001, 'Keyuri Patel');
+    manage_employee('UPDATE', 1001, 'Mohan Bhatt');
+    manage_employee('DELETE', 1001, 'Yuva Shah');
+END;
+/
+
+
+
+
+CREATE TABLE emp (
+employee_id     NUMBER PRIMARY KEY,
+first_name      VARCHAR2(50),
+last_name       VARCHAR2(50),
+salary          NUMBER(10, 2),
+department_id   NUMBER,
+department_type VARCHAR2(50)
+);
+CREATE TABLE dep (
+department_id   NUMBER PRIMARY KEY,
+department_name VARCHAR2(100),
+department_type VARCHAR2(50)
+);
+INSERT INTO emp(employee_id, first_name, last_name, salary, department_id, department_type)
+VALUES (1, 'Janki', 'Gohil', 60000, 10, 'SALES');
+
+INSERT INTO emp(employee_id, first_name, last_name, salary, department_id, department_type)
+VALUES (2, 'Abhisha', 'Ladola', 50000, 20, 'HR');
+
+INSERT INTO emp(employee_id, first_name, last_name, salary, department_id, department_type)
+VALUES (3, 'mansi', 'shah', 55000, 10, 'SALES');
+
+INSERT INTO dep(department_id, department_name, department_type)
+VALUES (1, 'Sales Department', 'SALES');
+
+INSERT INTO dep(department_id, department_name, department_type)
+VALUES (2, 'Human Resources', 'HR');
+
+INSERT INTO dep(department_id, department_name, department_type)
+VALUES (3, 'Information Technology', 'IT');
+
+DECLARE
+  v_cursor    INTEGER;
+  v_sql       VARCHAR2(1000);
+  v_name      VARCHAR2(100);
+  v_emp_id    NUMBER := 2;
+  v_rows      NUMBER;
+BEGIN
+  v_sql := 'SELECT first_name FROM emp WHERE employee_id = :emp_id';
+
+  v_cursor := DBMS_SQL.OPEN_CURSOR;
+
+  DBMS_SQL.PARSE(v_cursor, v_sql, DBMS_SQL.NATIVE);
+
+  DBMS_SQL.BIND_VARIABLE(v_cursor, ':emp_id', v_emp_id);
+
+  v_rows := DBMS_SQL.EXECUTE(v_cursor);
+
+  DBMS_SQL.DEFINE_COLUMN(v_cursor, 1, v_name, 100);
+
+  IF DBMS_SQL.FETCH_ROWS(v_cursor) > 0 THEN
+    DBMS_SQL.COLUMN_VALUE(v_cursor, 1, v_name);
+    DBMS_OUTPUT.PUT_LINE('Employee Name: ' || v_name);
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('No employee found with ID ' || v_emp_id);
+  END IF;
+
+  DBMS_SQL.CLOSE_CURSOR(v_cursor);
+END;
+/
+
+
+DECLARE
+  v_cursor     INTEGER;
+  v_sql        VARCHAR2(1000);
+  v_emp_id     NUMBER := 7;
+  v_first_name VARCHAR2(100) := 'Srushti';
+  v_last_name  VARCHAR2(100) := 'Vaghani';
+  v_rows       NUMBER;
+BEGIN
+  v_sql := 'INSERT INTO emp(employee_id, first_name, last_name) VALUES (:emp_id, :first_name, :last_name)';
+
+  v_cursor := DBMS_SQL.OPEN_CURSOR;
+
+  DBMS_SQL.PARSE(v_cursor, v_sql, DBMS_SQL.NATIVE);
+
+  DBMS_SQL.BIND_VARIABLE(v_cursor, ':emp_id', v_emp_id);
+  DBMS_SQL.BIND_VARIABLE(v_cursor, ':first_name', v_first_name);
+  DBMS_SQL.BIND_VARIABLE(v_cursor, ':last_name', v_last_name);
+
+  v_rows := DBMS_SQL.EXECUTE(v_cursor);
+
+  COMMIT;
+
+  DBMS_SQL.CLOSE_CURSOR(v_cursor);
+
+  DBMS_OUTPUT.PUT_LINE('Data inserted successfully. Rows affected: ' || v_rows);
+END;
+/
+
+DECLARE
+  v_cursor    INTEGER;
+  v_sql       VARCHAR2(1000);
+  v_emp_id    NUMBER := 1;      
+  v_salary    NUMBER := 150000; 
+  v_rows      NUMBER;           
+BEGIN
+  v_sql := 'UPDATE emp SET salary = :salary WHERE employee_id = :emp_id';
+
+  v_cursor := DBMS_SQL.OPEN_CURSOR;
+
+  DBMS_SQL.PARSE(v_cursor, v_sql, DBMS_SQL.NATIVE);
+
+  DBMS_SQL.BIND_VARIABLE(v_cursor, ':emp_id', v_emp_id);
+  DBMS_SQL.BIND_VARIABLE(v_cursor, ':salary', v_salary);
+
+  v_rows := DBMS_SQL.EXECUTE(v_cursor);
+
+  COMMIT;
+
+  DBMS_SQL.CLOSE_CURSOR(v_cursor);
+
+  DBMS_OUTPUT.PUT_LINE('Salary updated successfully. Rows affected: ' || v_rows);
+END;
+/
+
+DECLARE
+  v_cursor    INTEGER;
+  v_sql       VARCHAR2(1000);
+  v_emp_id    NUMBER := 7;  
+  v_rows      NUMBER;
+BEGIN
+ 
+  v_sql := 'DELETE FROM emp WHERE employee_id = :emp_id';
+
+  -- Open the cursor
+  v_cursor := DBMS_SQL.OPEN_CURSOR;
+
+ 
+  DBMS_SQL.PARSE(v_cursor, v_sql, DBMS_SQL.NATIVE);
+
+ 
+  DBMS_SQL.BIND_VARIABLE(v_cursor, ':emp_id', v_emp_id);
+
+ 
+  v_rows := DBMS_SQL.EXECUTE(v_cursor);
+
+   
+  IF v_rows > 0 THEN
+    DBMS_OUTPUT.PUT_LINE('Employee with ID ' || v_emp_id || ' has been deleted.');
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('No employee found with ID ' || v_emp_id || ' to delete.');
+  END IF;
+
+   
+  DBMS_SQL.CLOSE_CURSOR(v_cursor);
+EXCEPTION
+  WHEN OTHERS THEN
+     
+    IF DBMS_SQL.IS_OPEN(v_cursor) THEN
+      DBMS_SQL.CLOSE_CURSOR(v_cursor);
+    END IF;
+    RAISE;
+END;
+/
+
+
+
+
+Practical-18
+------------
+- SQL_LOADER
+
+create folder for SQL LOADER 
+
+- create table
+	CREATE TABLE DEPT (
+	DEPT_ID INT
+	DEPT_NAME VARCHAR(255)
+	);
+	
+- create loader file
+	- loader.txt
+	1, HR
+	2, ACCOUNT
+	3, TECHNICAL
+
+- create control file
+	- controller.ctl 	
+	load data
+	infile 'loader.txt'
+	into table DEPT
+	fields terminated by ','
+	(
+	   DEPT_ID,
+	   DEPT_NAME
+	)
+
+- go to cmd of path of file
+	sqlldr userid=mca307 control="controller.ctl.txt";
+
+
+load data
+infile "emp.dat"
+badfile "emp.bad"
+discardfile "emp.dsc"
+insert into table emp
+when salary = '23000'
+fields terminated by ","
+(id,name,salary)
+
+
+
+
+
+->set oracle_sid=orcl19c
+->sqlplus /nolog
+->conn mca331@orcl19/gvpgvp
+
+
+->desc emp;
+->exit
+
+->d:
+->cd loader
+->dir
+
+-> sqlldr mca331@orcl19/gvpgvp
+-> control - emp.ctl
+
+->>sqlplus /nolog
+->conn mca331@orcl19/gvpgvp
+->select *from emp;
+
+->exit
+->sqlldr mca331@orcl19/gvpgvp
+-> control -emp.ctl
+
+->sqlplus /nolog
+->conn mca331@orcl19/gvpgvp
+->select *from emp;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

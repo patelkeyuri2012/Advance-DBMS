@@ -1,0 +1,140 @@
+set serveroutput on
+
+purge recyclebin;
+
+create an audit crash trigger for your any object for who work on your table?, when he/she work on table?, what types of operations he/she is applied on the table ?
+
+
+CREATE A TABLE :
+--------------
+
+CREATE TABLE audit_log (
+    audit_id       NUMBER(10) PRIMARY KEY,
+    user_name      VARCHAR2(30),
+    operation      VARCHAR2(10),
+    table_name     VARCHAR2(30),
+    audit_date     DATE,
+    duration       NUMBER(10, 2),
+    old_stdid      NUMBER(3),
+    old_stdname    VARCHAR2(20),
+    old_stdemail   VARCHAR2(30),
+    new_stdid      NUMBER(3),
+    new_stdname    VARCHAR2(20),
+    new_stdemail   VARCHAR2(30)
+)
+TABLESPACE stud
+STORAGE (
+    INITIAL 5000
+    NEXT 2000
+    MINEXTENTS 1
+    MAXEXTENTS 2
+);
+
+
+CREATE A SEQUENCE :
+-----------------
+
+CREATE SEQUENCE audit_seq
+START WITH 1
+INCREMENT BY 1
+NOCACHE
+NOCYCLE;
+
+
+CREATE A TRIGGER :
+---------------- 
+
+CREATE OR REPLACE TRIGGER audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON student_master
+FOR EACH ROW
+DECLARE
+    v_operation VARCHAR2(10);
+    v_start_time DATE;
+    v_end_time DATE;
+    v_duration NUMBER(10, 2);
+    v_audit_id NUMBER;
+BEGIN
+    v_start_time := SYSDATE;
+
+    IF INSERTING THEN
+        v_operation := 'INSERT';
+        INSERT INTO audit_log (
+            audit_id, user_name, operation, table_name, audit_date, duration,
+            new_stdid, new_stdname, new_stdemail
+        ) VALUES (
+            audit_seq.NEXTVAL, SYS_CONTEXT('USERENV', 'SESSION_USER'), v_operation, 'student_master',
+            SYSDATE, NULL,
+            :NEW.stdid, :NEW.stdname, :NEW.stdemail
+        ) RETURNING audit_id INTO v_audit_id;
+    ELSIF UPDATING THEN
+        v_operation := 'UPDATE';
+        INSERT INTO audit_log (
+            audit_id, user_name, operation, table_name, audit_date, duration,
+            old_stdid, old_stdname, old_stdemail,
+            new_stdid, new_stdname, new_stdemail
+        ) VALUES (
+            audit_seq.NEXTVAL, SYS_CONTEXT('USERENV', 'SESSION_USER'), v_operation, 'student_master',
+            SYSDATE, NULL,
+            :OLD.stdid, :OLD.stdname, :OLD.stdemail,
+            :NEW.stdid, :NEW.stdname, :NEW.stdemail
+        ) RETURNING audit_id INTO v_audit_id;
+    ELSIF DELETING THEN
+        v_operation := 'DELETE';
+        INSERT INTO audit_log (
+            audit_id, user_name, operation, table_name, audit_date, duration,
+            old_stdid, old_stdname, old_stdemail
+        ) VALUES (
+            audit_seq.NEXTVAL, SYS_CONTEXT('USERENV', 'SESSION_USER'), v_operation, 'student_master',
+            SYSDATE, NULL,
+            :OLD.stdid, :OLD.stdname, :OLD.stdemail
+        ) RETURNING audit_id INTO v_audit_id;
+    END IF;
+
+    v_end_time := SYSDATE;
+    v_duration := (v_end_time - v_start_time) * 24 * 60 * 60; -- Convert duration to seconds
+
+    -- Update duration after initial insert
+    UPDATE audit_log
+    SET duration = v_duration
+    WHERE audit_id = v_audit_id;
+END;
+/
+
+
+CREATE A PROCEDURE :
+------------------
+
+CREATE OR REPLACE PROCEDURE audit_procedure (
+    object_schema VARCHAR2,
+    object_name VARCHAR2,
+    policy_name VARCHAR2
+)
+AS
+    v_user VARCHAR2(30);
+    v_start_time DATE;
+    v_end_time DATE;
+    v_duration NUMBER(10, 2);
+BEGIN
+    v_start_time := SYSDATE;
+    v_user := SYS_CONTEXT('USERENV', 'SESSION_USER');
+    v_end_time := SYSDATE;
+    v_duration := (v_end_time - v_start_time) * 24 * 60 * 60; -- Convert duration to seconds
+
+    INSERT INTO audit_log (
+        audit_id, user_name, operation, table_name, audit_date, duration
+    ) VALUES (
+        audit_seq.NEXTVAL, v_user, 'SELECT', object_name, v_end_time, v_duration
+    );
+END;
+/
+
+
+SET LINESIZE 150
+
+COLUMN user_name FORMAT A6
+COLUMN operation FORMAT A7
+COLUMN audit_dat FORMAT A10
+COLUMN old_stdname FORMAT A6
+COLUMN old_stdemail FORMAT A20
+COLUMN new_stdname FORMAT A6
+COLUMN new_stdemail FORMAT A20
