@@ -1,0 +1,72 @@
+Practical-2
+-----------
+- Write a query to identify lock in the database and generate formatted output for better understanding.
+
+
+
+SELECT * FROM student_master
+WHERE stdid = 1
+FOR UPDATE;
+
+select sid, username from v$session;
+
+SELECT 
+    s.sid AS "Session ID",
+    s.serial# AS "Serial Number",
+    s.username AS "Username",
+    l.type AS "Lock Type",
+    l.lmode AS "Lock Mode",
+    l.request AS "Request Mode",
+    l.id1 AS "ID1 (Object ID)",
+    l.id2 AS "ID2 (Sub-object ID)"
+FROM 
+    v$session s
+JOIN 
+    v$lock l ON s.sid = l.sid
+WHERE 
+    s.sid = 251;
+
+COMMIT;  or ROLLBACK;
+
+
+LOCK TABLE student_master IN EXCLUSIVE MODE;
+
+
+SELECT * FROM student_master
+WHERE stdid = 1
+FOR UPDATE;
+
+select sid, username from v$session;
+
+SELECT 
+    s.sid AS "Session ID",
+    s.serial# AS "Serial Number",
+    s.username AS "Username",
+    l.type AS "Lock Type",
+    l.lmode AS "Lock Mode",
+    o.object_name AS "Locked Table",
+    l.id1 AS "ID1 (Object ID)",
+    l.id2 AS "ID2 (Sub-object ID)"
+FROM 
+    v$session s
+JOIN 
+    v$lock l ON s.sid = l.sid
+JOIN 
+    dba_objects o ON l.id1 = o.object_id
+WHERE 
+    l.type = 'TM' and s.sid = 251;
+
+COMMIT;  or ROLLBACK;
+
+
+
+TX: Transactional lock
+Row: Row-level lock
+Table: Table-level lock
+
+0: No lock
+1: Null
+2: Row-S, Shared row lock
+3: Row-X, Exclusive row lock
+4: Share lock
+5: Exclusive lock

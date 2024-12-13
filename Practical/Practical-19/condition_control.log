@@ -1,0 +1,62 @@
+
+SQL*Loader: Release 19.0.0.0.0 - Production on Thu Dec 5 12:03:54 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+Control File:   condition_control.ctl
+Data File:      loader.txt
+  Bad File:     bad_file.bad
+  Discard File: discard_file.dsc 
+ (Allow all discards)
+
+Number to load: ALL
+Number to skip: 0
+Errors allowed: 50
+Bind array:     250 rows, maximum of 1048576 bytes
+Continuation:    none specified
+Path used:      Conventional
+
+Table CATEGORY, loaded when CATEGORY_NAME = 0X4d7974686f6c6f6779(character 'Mythology')
+Insert option in effect for this table: APPEND
+
+   Column Name                  Position   Len  Term Encl Datatype
+------------------------------ ---------- ----- ---- ---- ---------------------
+CATEGORY_ID                         FIRST     *   ,       CHARACTER            
+CATEGORY_NAME                        NEXT     *   ,       CHARACTER            
+
+Record 1: Discarded - failed all WHEN clauses.
+Record 2: Discarded - failed all WHEN clauses.
+Record 3: Discarded - failed all WHEN clauses.
+Record 4: Discarded - failed all WHEN clauses.
+Record 5: Discarded - failed all WHEN clauses.
+Record 6: Discarded - failed all WHEN clauses.
+Record 7: Discarded - failed all WHEN clauses.
+Record 9: Discarded - failed all WHEN clauses.
+Record 10: Discarded - failed all WHEN clauses.
+Record 11: Discarded - failed all WHEN clauses.
+Record 12: Discarded - failed all WHEN clauses.
+Record 8: Rejected - Error on table CATEGORY.
+ORA-00001: unique constraint (MCA307.SYS_C0018700) violated
+
+
+Table CATEGORY:
+  0 Rows successfully loaded.
+  1 Row not loaded due to data errors.
+  11 Rows not loaded because all WHEN clauses were failed.
+  0 Rows not loaded because all fields were null.
+
+
+Space allocated for bind array:                 129000 bytes(250 rows)
+Read   buffer bytes: 1048576
+
+Total logical records skipped:          0
+Total logical records read:            12
+Total logical records rejected:         1
+Total logical records discarded:       11
+
+Run began on Thu Dec 05 12:03:54 2024
+Run ended on Thu Dec 05 12:03:57 2024
+
+Elapsed time was:     00:00:03.41
+CPU time was:         00:00:00.14

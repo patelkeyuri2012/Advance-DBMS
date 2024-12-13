@@ -1,0 +1,22 @@
+
+Connected to: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+Export file created by EXPORT:V19.00.00 via conventional path
+import done in WE8MSWIN1252 character set and AL16UTF16 NCHAR character set
+import server uses AL32UTF8 character set (possible charset conversion)
+. importing MCA307's objects into MCA307
+IMP-00015: following statement failed because the object already exists:
+ "CREATE TABLE "CATEGORY" ("CATEGORY_ID" NUMBER(*,0), "CATEGORY_NAME" VARCHAR"
+ "2(255))  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 STORAGE(INITIAL 6553"
+ "6 NEXT 1048576 MINEXTENTS 1 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAU"
+ "LT)                   LOGGING NOCOMPRESS"
+IMP-00015: following statement failed because the object already exists:
+ "CREATE TYPE "STUDENT_MARKS" TIMESTAMP '2024-09-20:15:44:33' OID '8EE10F9838"
+ "814E8688C15C41DF11FF4D'   AS VARRAY(3) OF NUMBER;"
+IMP-00015: following statement failed because the object already exists:
+ "CREATE TABLE "STUDENT" ("STUDENT_ID" NUMBER, "STUDENT_NAME" VARCHAR2(100), "
+ ""MARKS" "STUDENT_MARKS")  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 STO"
+ "RAGE(INITIAL 65536 NEXT 8192 MINEXTENTS 1 FREELISTS 1 FREELIST GROUPS 1 BUF"
+ "FER_POOL DEFAULT)                   LOGGING NOCOMPRESS"
+Import terminated successfully with warnings.

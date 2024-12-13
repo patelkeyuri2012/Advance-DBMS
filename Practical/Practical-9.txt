@@ -1,0 +1,101 @@
+Practical-8
+-----------
+- Write a procedure to update, delete and insert new element in varray.
+
+
+CREATE OR REPLACE TYPE student_marks AS VARRAY(3) OF NUMBER;
+
+CREATE TABLE STUDENT (
+    student_id NUMBER PRIMARY KEY,
+    student_name VARCHAR2(100),
+    marks student_marks
+) 
+STORAGE (
+    INITIAL 1000        
+    NEXT 100           
+    MINEXTENTS 1       
+    MAXEXTENTS 2 
+);
+
+
+INSERT INTO STUDENT (student_id, student_name, marks) VALUES (1, 'keyuri', student_marks(85, 90, 78));
+INSERT INTO STUDENT (student_id, student_name, marks) VALUES (2, 'yashvi', student_marks(88, 92, 80));
+INSERT INTO STUDENT (student_id, student_name, marks) VALUES (3, 'jainil', student_marks(88, 80));
+
+
+CREATE OR REPLACE TYPE student_marks AS VARRAY(3) OF NUMBER;
+/
+
+CREATE OR REPLACE PROCEDURE manage_marks(
+    sid IN NUMBER,
+    action IN VARCHAR2,
+    mark IN NUMBER,
+    updated_mark IN NUMBER DEFAULT NULL
+)
+IS
+    current_marks student_marks;
+    new_marks student_marks := student_marks();
+    found BOOLEAN := FALSE;
+BEGIN
+    SELECT marks INTO current_marks FROM STUDENT WHERE student_id = sid;
+
+    IF action = 'insert' THEN
+        IF current_marks.COUNT < 3 THEN
+            current_marks.EXTEND;
+            current_marks(current_marks.LAST) := mark;
+            UPDATE STUDENT SET marks = current_marks WHERE student_id = sid;
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('Cannot insert: maximum marks reached.');
+        END IF;
+
+    ELSIF action = 'update' THEN
+        FOR i IN 1..current_marks.COUNT LOOP
+            IF current_marks(i) = mark THEN
+                current_marks(i) := updated_mark;
+                found := TRUE;
+                UPDATE STUDENT SET marks = current_marks WHERE student_id = sid;
+                EXIT;
+            END IF;
+        END LOOP;
+        
+        IF NOT found THEN
+            DBMS_OUTPUT.PUT_LINE('Mark not found for update.');
+        END IF;
+
+    ELSIF action = 'delete' THEN
+        FOR i IN 1..current_marks.COUNT LOOP
+            IF current_marks(i) != mark THEN
+                new_marks.EXTEND;
+                new_marks(new_marks.COUNT) := current_marks(i);
+            END IF;
+        END LOOP;
+        
+        UPDATE STUDENT SET marks = new_marks WHERE student_id = sid;
+    END IF;
+END;
+/
+
+
+BEGIN
+    manage_marks(2, 'update', 92, 95); 
+END;
+/
+BEGIN
+    manage_marks(1, 'insert', 60);  
+END;
+/
+BEGIN
+    manage_marks(1, 'delete', 85);  
+END;
+/
+
+
+
+EXEC manage_marks(2, 'update', 92, 95);
+
+EXEC manage_marks(1, 'insert', 60);
+
+EXEC manage_marks(1, 'delete', 85);
+
+
+

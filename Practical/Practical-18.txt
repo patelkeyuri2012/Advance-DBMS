@@ -1,0 +1,10 @@
+Practical-17
+------------
+- Put your job for insert new five records into student database using DBMS_JOB package.
+
+DECLARE
+  job_number NUMBER;
+BEGIN
+  DBMS_JOB.SUBMIT(job => job_number, what => 'BEGIN INSERT INTO student_table (id, name) VALUES (1, ''John''); END;', next_date => SYSDATE, interval => 'SYSDATE + 1/1440');
+  COMMIT;
+END;

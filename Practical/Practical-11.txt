@@ -1,0 +1,45 @@
+Practical-10
+------------
+- Export full schema and Import in the scott schema of the database. 
+- And also explain each parameter with Export and Import. 
+- And Load external data into your schema with the help of all the three method.
+
+
+Export entire :
+exp mca307@orcl19 file=mca307_schema.dmp log=mca307_export.log owner=mca307 rows=y indexes=y grants=y triggers=y constraints=y
+
+
+Export specific tables :
+exp mca307@orcl19 file=mca307_tables.dmp log=mca307_tables_export.log owner=mca307 tables=category,student rows=y indexes=y grants=y triggers=y constraints=y
+
+
+Export schema excluding a specific object type :
+exp mca307@orcl19 file=mca307_exclude_procedures.dmp log=mca307_export_exclude_procedures.log owner=mca307 rows=y indexes=y grants=y triggers=y constraints=y exclude=PROCEDURE
+
+
+Export only the data :
+exp mca307@orcl19 file=mca307_data_only.dmp log=mca307_data_only_export.log owner=mca307 rows=y indexes=n grants=n triggers=n constraints=n
+
+
+Export schema including specific tables but without indexes:
+exp mca307@orcl19 file=mca307_no_indexes.dmp log=mca307_no_indexes_export.log owner=mca307 tables=category,student rows=y indexes=n grants=y triggers=y constraints=y
+
+
+
+Import the schema :
+imp mca333@orcl19 file=mca307_schema.dmp log=mca333_import.log fromuser=mca307 touser=mca333
+
+
+Import schema excluding a specific table :
+imp mca307@orcl19 file=mca307_schema.dmp log=mca307_import_exclude_table.log fromuser=mca307 touser=mca307 tables=(category,student) ignore=y
+
+
+Import specific tables :
+imp mca307@orcl19 file=mca307_schema.dmp log=mca307_import_tables.log fromuser=mca307 touser=mca307 tables=category,student
+
+Import data excluding constraints :
+imp mca333@orcl19 file=mca307_schema.dmp log=mca333_import_no_constraints.log fromuser=mca307 touser=mca333 constraints=n
+
+
+Import data overriding existing data:
+imp mca307@orcl19 file=mca307_schema.dmp log=mca307_import_override.log fromuser=mca307 touser=mca307 full=y

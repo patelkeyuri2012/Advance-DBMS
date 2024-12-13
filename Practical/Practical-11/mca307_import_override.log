@@ -1,0 +1,9 @@
+
+Connected to: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+Export file created by EXPORT:V19.00.00 via conventional path
+import done in WE8MSWIN1252 character set and AL16UTF16 NCHAR character set
+import server uses AL32UTF8 character set (possible charset conversion)
+IMP-00024: Only one mode (TABLES, FROMUSER, or FULL) can be specified
+IMP-00000: Import terminated unsuccessfully

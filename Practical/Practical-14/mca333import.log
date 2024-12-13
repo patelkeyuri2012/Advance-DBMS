@@ -1,0 +1,4 @@
+
+IMP-00058: ORACLE error 12154 encountered
+ORA-12154: TNS:could not resolve the connect identifier specified
+IMP-00000: Import terminated unsuccessfully

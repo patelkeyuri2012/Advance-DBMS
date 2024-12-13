@@ -1,0 +1,68 @@
+Practical-12
+------------
+- With the use of DBMS_DDL package recompile your all modified package or procedure in you schema.
+
+
+CREATE TABLE employee (
+    employee_id NUMBER PRIMARY KEY,
+    first_name VARCHAR2(50),
+    last_name VARCHAR2(50),
+    hire_date DATE,
+    salary NUMBER(8, 2)
+);
+
+CREATE OR REPLACE PROCEDURE ADD_EMPLOYEE(
+    p_employee_id IN NUMBER,
+    p_first_name IN VARCHAR2,
+    p_last_name IN VARCHAR2,
+    p_hire_date IN DATE,
+    p_salary IN NUMBER
+) AS
+BEGIN
+    INSERT INTO employee (employee_id, first_name, last_name, hire_date, salary)
+    VALUES (p_employee_id, p_first_name, p_last_name, p_hire_date, p_salary)
+END;
+/
+
+SELECT object_name, status, object_type
+FROM user_objects
+WHERE object_name = 'ADD_EMPLOYEE';
+
+SELECT text
+FROM user_source
+WHERE name = 'ADD_EMPLOYEE'
+ORDER BY line;
+
+CREATE OR REPLACE PROCEDURE ADD_EMPLOYEE(
+    p_employee_id IN NUMBER,
+    p_first_name IN VARCHAR2,
+    p_last_name IN VARCHAR2,
+    p_hire_date IN DATE,
+    p_salary IN NUMBER
+) AS
+BEGIN
+    INSERT INTO employee (employee_id, first_name, last_name, hire_date, salary)
+    VALUES (p_employee_id, p_first_name, p_last_name, p_hire_date, p_salary); 
+END;
+/
+
+BEGIN
+  DBMS_DDL.alter_compile('PROCEDURE','MCA307','ADD_EMPLOYEE');
+END;
+/
+
+BEGIN
+  FOR rec IN (SELECT object_name, object_type 
+              FROM user_objects 
+              WHERE object_type IN ('PACKAGE', 'PROCEDURE') 
+              AND status = 'INVALID') 
+  LOOP
+    DBMS_DDL.alter_compile(rec.object_type, USER, rec.object_name);
+  END LOOP;
+END;
+/
+
+ALTER PROCEDURE MCA307.ADD_EMPLOYEE COMPILE;
+
+EXEC add_employee(101, 'Keyuri', 'Patel', TO_DATE('2024-01-15', 'YYYY-MM-DD'), 50000);
+

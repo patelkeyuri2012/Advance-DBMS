@@ -1,0 +1,5 @@
+Practical-18
+------------
+- Implement SQL_LOADER package
+
+sqlldr mca307@orcl19 control=control.ctl 

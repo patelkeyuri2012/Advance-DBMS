@@ -1,0 +1,40 @@
+Practical-5
+-----------
+- Write different queries to find out hit ratio for the shared pool area and redo log each.
+
+Shared Pool Hit Ratio = (1 - (session cursor cache misses + parse count (hard)) / parse count (total)) * 100
+
+Redo Log Buffer Hit Ratio = (1 - (redo buffer allocation retries / redo entries)) * 100
+
+
+Shared Pool Hit Ratio 
+-------------------------------------------------
+SELECT 
+    round((1 - (sum(pinhits) / sum(pins))) * 100, 2) AS "shared pool hit ratio"
+FROM 
+    v$librarycache;
+    
+
+Redo Log Buffer Hit Ratio
+-------------------------------------------------
+
+SELECT
+    (1 - (r.value / e.value)) * 100 as redo_log_hit_ratio
+FROM 
+    v$sysstat r, v$sysstat e
+WHERE  
+    r.name = 'redo log space requests'
+AND    
+    e.name = 'redo entries';
+
+WITH stats AS (
+  SELECT 
+    sum(case when name = 'redo entries' then value else 0 end) AS redo_entries,
+    sum(case when name = 'redo wastage' then value else 0 end) AS redo_wastage
+  FROM v$sysstat
+) SELECT 
+  ROUND((1 - (redo_wastage / redo_entries)) * 100, 2) AS "redo log hit ratio"
+FROM stats;
+
+
+Conclusion: These ratios should be above 90% for optimal performance.

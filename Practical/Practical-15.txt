@@ -1,0 +1,18 @@
+Practical-14
+------------
+- Export your schema without procedure and import into scott schema and load data from sequential file and dump into scott schema.
+
+Export the mca307 schema (excluding procedures manually):
+exp mca307/mca307@orcl9 file=mca333export.dmp log=mca333export.log  
+
+Importing into the SCOTT Schema Using:
+imp mca333/tae@orcl9 file=mca333export.dmp log=mca333import.log fromuser=mca307 touser=scott
+
+Loading Data from a Sequential File Using SQL*Loader:
+sqlldr mca307@orcl19 control=control.ctl 
+
+Exporting Data from the SCOTT Schema:
+exp mca333/tae@orcl9 file=scott_export.dmp log=scott_export.log
+
+
+    

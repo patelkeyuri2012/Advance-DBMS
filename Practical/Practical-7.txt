@@ -1,0 +1,35 @@
+Practical-6
+-----------
+- Write a query to find out what will be the execution plan of the query.
+- Derive all the steps.
+
+
+EXPLAIN PLAN 
+SET STATEMENT_ID = 'StudentData'
+FOR 
+SELECT * FROM student WHERE student_id > 5;
+
+SELECT id, 
+       statement_id,
+       plan_id,
+       operation,
+       options, 
+       object_name, 
+       object_alias, 
+       position,
+       parent_id,
+       cpu_cost,
+       io_cost
+FROM plan_table 
+START WITH id = 0 AND statement_id = 'StudentData' 
+CONNECT BY PRIOR id = parent_id 
+ORDER BY id;
+
+
+DELETE FROM plan_table;
+
+COLUMN position FORMAT A20
+COLUMN object_alias FORMAT A20
+COLUMN object_name FORMAT A20
+COLUMN options FORMAT A30
+COLUMN operation FORMAT A20

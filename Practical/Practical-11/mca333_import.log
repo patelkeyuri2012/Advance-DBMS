@@ -1,0 +1,167 @@
+
+IMP-00058: ORACLE error 1017 encountered
+ORA-01017: invalid username/password; logon deniedUsername: 
+IMP-00058: ORACLE error 1017 encountered
+ORA-01017: invalid username/password; logon deniedUsername: 
+Connected to: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+Export file created by EXPORT:V19.00.00 via conventional path
+
+Warning: the objects were exported by MCA307, not by you
+
+import done in WE8MSWIN1252 character set and AL16UTF16 NCHAR character set
+import server uses AL32UTF8 character set (possible charset conversion)
+IMP-00017: following statement failed with ORACLE error 2304:
+ "CREATE TYPE "STUDENT_OBJ_TYPE" TIMESTAMP '2024-08-09:15:37:03' OID '87DD384"
+ "EFFDD47178F06DF241DAFF804'   AS OBJECT ("
+ "    stdid    NUMBER(3),"
+ "    stdname  VARCHAR2(20),"
+ "    stdemail VARCHAR2(30)"
+ ");"
+IMP-00003: ORACLE error 2304 encountered
+ORA-02304: invalid object identifier literal
+IMP-00017: following statement failed with ORACLE error 2304:
+ "CREATE TYPE "STUDENT_TABLE_TYPE" TIMESTAMP '2024-08-09:15:37:06' OID '47D8F"
+ "998CEE24704879CFB87AB6ADF7A'   AS TABLE OF student_obj_type;"
+IMP-00003: ORACLE error 2304 encountered
+ORA-02304: invalid object identifier literal
+IMP-00017: following statement failed with ORACLE error 2304:
+ "CREATE TYPE "CNO" TIMESTAMP '2024-08-09:15:44:08' OID 'C386033B1A70476C8365"
+ "56D124103132'   AS VARRAY(5) OF VARCHAR2(15);"
+IMP-00003: ORACLE error 2304 encountered
+ORA-02304: invalid object identifier literal
+IMP-00017: following statement failed with ORACLE error 2304:
+ "CREATE TYPE "CNO_VARRAY" TIMESTAMP '2024-08-12:08:35:23' OID '113C2AC774FD4"
+ "E37B5BD130776640AF3'   AS VARRAY(3) OF VARCHAR2(10);"
+IMP-00003: ORACLE error 2304 encountered
+ORA-02304: invalid object identifier literal
+IMP-00017: following statement failed with ORACLE error 2304:
+ "CREATE TYPE "STUDENT_MARKS" TIMESTAMP '2024-09-20:15:44:33' OID '8EE10F9838"
+ "814E8688C15C41DF11FF4D'   AS VARRAY(3) OF NUMBER;"
+IMP-00003: ORACLE error 2304 encountered
+ORA-02304: invalid object identifier literal
+IMP-00017: following statement failed with ORACLE error 2304:
+ "CREATE TYPE "ADDRESS_REC" TIMESTAMP '2024-09-20:15:54:07' OID '8D65842668B1"
+ "43E7A4C4767F9E431022'   AS OBJECT ("
+ "    block VARCHAR2(50),"
+ "    block_no VARCHAR2(10),"
+ "    area VARCHAR2(100),"
+ "    pincode NUMBER"
+ ");"
+IMP-00003: ORACLE error 2304 encountered
+ORA-02304: invalid object identifier literal
+IMP-00017: following statement failed with ORACLE error 2304:
+ "CREATE TYPE "ADDRESS_TBL" TIMESTAMP '2024-09-20:15:54:06' OID '60FB77F98694"
+ "4A13ADDF9C66CB555128'   AS TABLE OF address_rec;"
+IMP-00003: ORACLE error 2304 encountered
+ORA-02304: invalid object identifier literal
+IMP-00015: following statement failed because the object already exists:
+ "CREATE TABLE "AUDIT_LOG" ("AUDIT_ID" NUMBER(10, 0), "USER_NAME" VARCHAR2(30"
+ "), "OPERATION" VARCHAR2(10), "TABLE_NAME" VARCHAR2(30), "AUDIT_DATE" DATE, "
+ ""DURATION" NUMBER(10, 2), "OLD_STDID" NUMBER(3, 0), "OLD_STDNAME" VARCHAR2("
+ "20), "OLD_STDEMAIL" VARCHAR2(30), "NEW_STDID" NUMBER(3, 0), "NEW_STDNAME" V"
+ "ARCHAR2(20), "NEW_STDEMAIL" VARCHAR2(30))  PCTFREE 10 PCTUSED 40 INITRANS 1"
+ " MAXTRANS 255 STORAGE(INITIAL 65536 NEXT 8192 MINEXTENTS 1 FREELISTS 1 FREE"
+ "LIST GROUPS 1 BUFFER_POOL DEFAULT)                   LOGGING NOCOMPRESS"
+. . importing table                     "CATEGORY"          8 rows imported
+. . importing table                     "EMPLOYEE"          1 rows imported
+IMP-00063: Warning: Skipping table "MCA333"."STUDENT" because object type "MCA333"."STUDENT_MARKS" cannot be created or has different identifier
+. . importing table               "STUDENT_MASTER"          9 rows imported
+IMP-00063: Warning: Skipping table "MCA333"."TEACHER" because object type "MCA333"."ADDRESS_REC" cannot be created or has different identifier
+IMP-00015: following statement failed because the object already exists:
+ "CREATE PROCEDURE audit_procedure ("
+ "    object_schema VARCHAR2,"
+ "    object_name VARCHAR2,"
+ "    policy_name VARCHAR2"
+ ")"
+ "AS"
+ "    v_user VARCHAR2(30);"
+ "    v_start_time DATE;"
+ "    v_end_time DATE;"
+ "    v_duration NUMBER(10, 2);"
+ "BEGIN"
+ "    v_start_time := SYSDATE;"
+ "    v_user := SYS_CONTEXT('USERENV', 'SESSION_USER');"
+ "    v_end_time := SYSDATE;"
+ "    v_duration := (v_end_time - v_start_time) * 24 * 60 * 60; -- Convert du"
+ "ration to seconds"
+ ""
+ "    INSERT INTO audit_log ("
+ "        audit_id, user_name, operation, table_name, audit_date, duration"
+ "    ) VALUES ("
+ "        audit_seq.NEXTVAL, v_user, 'SELECT', object_name, v_end_time, v_dur"
+ "ation"
+ "    );"
+ "END audit_procedure;"
+IMP-00015: following statement failed because the object already exists:
+ "CREATE TRIGGER "MCA333".audit_trigger"
+ "AFTER INSERT OR UPDATE OR DELETE ON student_master"
+ "FOR EACH ROW"
+ "DECLARE"
+ "    v_operation VARCHAR2(10);"
+ "    v_start_time DATE;"
+ "    v_end_time DATE;"
+ "    v_duration NUMBER(10, 2);"
+ "    v_audit_id NUMBER;"
+ "BEGIN"
+ "    v_start_time := SYSDATE;"
+ ""
+ "    IF INSERTING THEN"
+ "        v_operation := 'INSERT';"
+ "        INSERT INTO audit_log ("
+ "            audit_id, user_name, operation, table_name, audit_date, duratio"
+ "n,"
+ "            new_stdid, new_stdname, new_stdemail"
+ "        ) VALUES ("
+ "            audit_seq.NEXTVAL, SYS_CONTEXT('USERENV', 'SESSION_USER'), v_op"
+ "eration, 'student_master',"
+ "            SYSDATE, NULL,"
+ "            :NEW.stdid, :NEW.stdname, :NEW.stdemail"
+ "        ) RETURNING audit_id INTO v_audit_id;"
+ "    ELSIF UPDATING THEN"
+ "        v_operation := 'UPDATE';"
+ "        INSERT INTO audit_log ("
+ "            audit_id, user_name, operation, table_name, audit_date, duratio"
+ "n,"
+ "            old_stdid, old_stdname, old_stdemail,"
+ "            new_stdid, new_stdname, new_stdemail"
+ "        ) VALUES ("
+ "            audit_seq.NEXTVAL, SYS_CONTEXT('USERENV', 'SESSION_USER'), v_op"
+ "eration, 'student_master',"
+ "            SYSDATE, NULL,"
+ "            :OLD.stdid, :OLD.stdname, :OLD.stdemail,"
+ "            :NEW.stdid, :NEW.stdname, :NEW.stdemail"
+ "        ) RETURNING audit_id INTO v_audit_id;"
+ "    ELSIF DELETING THEN"
+ "        v_operation := 'DELETE';"
+ "        INSERT INTO audit_log ("
+ "            audit_id, user_name, operation, table_name, audit_date, duratio"
+ "n,"
+ "            old_stdid, old_stdname, old_stdemail"
+ "        ) VALUES ("
+ "            audit_seq.NEXTVAL, SYS_CONTEXT('USERENV', 'SESSION_USER'), v_op"
+ "eration, 'student_master',"
+ "            SYSDATE, NULL,"
+ "            :OLD.stdid, :OLD.stdname, :OLD.stdemail"
+ "        ) RETURNING audit_id INTO v_audit_id;"
+ "    END IF;"
+ ""
+ "    v_end_time := SYSDATE;"
+ "    v_duration := (v_end_time - v_start_time) * 24 * 60 * 60; -- Convert du"
+ "ration to seconds"
+ ""
+ "    -- Update duration after initial insert"
+ "    UPDATE audit_log"
+ "    SET duration = v_duration"
+ "    WHERE audit_id = v_audit_id;"
+ "END;"
+IMP-00017: following statement failed with ORACLE error 942:
+ "ANALYZE  TABLE "TEACHER"  ESTIMATE STATISTICS "
+IMP-00003: ORACLE error 942 encountered
+ORA-00942: table or view does not exist
+IMP-00017: following statement failed with ORACLE error 942:
+ "ANALYZE  TABLE "ADDRESSES_NT"  ESTIMATE STATISTICS "
+IMP-00003: ORACLE error 942 encountered
+ORA-00942: table or view does not exist
+Import terminated successfully with warnings.

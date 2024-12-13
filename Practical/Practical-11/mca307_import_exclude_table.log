@@ -1,0 +1,69 @@
+
+Connected to: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+Export file created by EXPORT:V19.00.00 via conventional path
+import done in WE8MSWIN1252 character set and AL16UTF16 NCHAR character set
+import server uses AL32UTF8 character set (possible charset conversion)
+. importing MCA307's objects into MCA307
+. . importing table                     "CATEGORY"
+IMP-00019: row rejected due to ORACLE error 1
+IMP-00003: ORACLE error 1 encountered
+ORA-00001: unique constraint (MCA307.SYS_C0018700) violated
+Column 1 1
+Column 2 Novel
+IMP-00019: row rejected due to ORACLE error 1
+IMP-00003: ORACLE error 1 encountered
+ORA-00001: unique constraint (MCA307.SYS_C0018700) violated
+Column 1 2
+Column 2 Horror
+IMP-00019: row rejected due to ORACLE error 1
+IMP-00003: ORACLE error 1 encountered
+ORA-00001: unique constraint (MCA307.SYS_C0018700) violated
+Column 1 3
+Column 2 Comedy
+IMP-00019: row rejected due to ORACLE error 1
+IMP-00003: ORACLE error 1 encountered
+ORA-00001: unique constraint (MCA307.SYS_C0018700) violated
+Column 1 4
+Column 2 Novel
+IMP-00019: row rejected due to ORACLE error 1
+IMP-00003: ORACLE error 1 encountered
+ORA-00001: unique constraint (MCA307.SYS_C0018700) violated
+Column 1 6
+Column 2 Education
+IMP-00019: row rejected due to ORACLE error 1
+IMP-00003: ORACLE error 1 encountered
+ORA-00001: unique constraint (MCA307.SYS_C0018700) violated
+Column 1 7
+Column 2 Mythology
+IMP-00019: row rejected due to ORACLE error 1
+IMP-00003: ORACLE error 1 encountered
+ORA-00001: unique constraint (MCA307.SYS_C0018700) violated
+Column 1 8
+Column 2 Education
+IMP-00019: row rejected due to ORACLE error 1
+IMP-00003: ORACLE error 1 encountered
+ORA-00001: unique constraint (MCA307.SYS_C0018700) violated
+Column 1 9
+Column 2 Comedy          0 rows imported
+. . importing table                      "STUDENT"
+IMP-00019: row rejected due to ORACLE error 1
+IMP-00003: ORACLE error 1 encountered
+ORA-00001: unique constraint (MCA307.SYS_C0017348) violated
+Column 1 1
+Column 2 keyuri
+Column 3 ...
+IMP-00019: row rejected due to ORACLE error 1
+IMP-00003: ORACLE error 1 encountered
+ORA-00001: unique constraint (MCA307.SYS_C0017348) violated
+Column 1 2
+Column 2 yashvi
+Column 3 ...
+IMP-00019: row rejected due to ORACLE error 1
+IMP-00003: ORACLE error 1 encountered
+ORA-00001: unique constraint (MCA307.SYS_C0017348) violated
+Column 1 3
+Column 2 jainil
+Column 3 ...          0 rows imported
+Import terminated successfully with warnings.

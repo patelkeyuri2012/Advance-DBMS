@@ -1,0 +1,99 @@
+Practical-9
+-----------
+- Write a procedure to update, delete and insert new element in nested table.
+
+
+CREATE TABLE TEACHER (
+    teacher_id NUMBER PRIMARY KEY,
+    teacher_name VARCHAR2(100),
+    addresses address_tbl
+) NESTED TABLE addresses STORE AS addresses_nt
+STORAGE (
+    INITIAL 1000        
+    NEXT 100           
+    MINEXTENTS 1       
+    MAXEXTENTS 2 
+);
+
+
+CREATE OR REPLACE TYPE address_rec AS OBJECT (
+    block VARCHAR2(50),
+    block_no VARCHAR2(10),
+    area VARCHAR2(100),
+    pincode NUMBER
+);
+/ 
+
+CREATE OR REPLACE TYPE address_tbl AS TABLE OF address_rec;
+/ 
+
+
+CREATE OR REPLACE PROCEDURE manage_teacher_address (
+    p_teacher_id IN NUMBER,
+    p_action IN VARCHAR2,
+    p_index IN INTEGER DEFAULT NULL,
+    p_block IN VARCHAR2 DEFAULT NULL,
+    p_block_no IN VARCHAR2 DEFAULT NULL,
+    p_area IN VARCHAR2 DEFAULT NULL,
+    p_pincode IN NUMBER DEFAULT NULL
+) AS
+    v_addresses address_tbl;  
+BEGIN
+    SELECT addresses INTO v_addresses FROM TEACHER WHERE teacher_id = p_teacher_id;
+
+    IF p_action = 'INSERT' THEN
+        v_addresses.EXTEND;
+        v_addresses(v_addresses.COUNT) := address_rec(p_block, p_block_no, p_area, p_pincode);
+
+    ELSIF p_action = 'UPDATE' THEN
+        IF p_index IS NOT NULL AND p_index BETWEEN 1 AND v_addresses.COUNT THEN
+            v_addresses(p_index) := address_rec(p_block, p_block_no, p_area, p_pincode);
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('Invalid index for update.');
+        END IF;
+
+    ELSIF p_action = 'DELETE' THEN
+        IF p_index IS NOT NULL AND p_index BETWEEN 1 AND v_addresses.COUNT THEN
+            v_addresses.DELETE(p_index);
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('Invalid index for deletion.');
+        END IF;
+    END IF;
+
+    UPDATE TEACHER
+    SET addresses = v_addresses
+    WHERE teacher_id = p_teacher_id;
+END;
+
+
+
+INSERT INTO TEACHER (teacher_id, teacher_name, addresses)
+VALUES (1, 'keyuri', address_tbl(
+        address_rec('Block A', '1', 'Gota', 382481),
+        address_rec('Block B', '2', 'Vandematram', 382481)
+    ));
+
+INSERT INTO TEACHER (teacher_id, teacher_name, addresses)
+VALUES (2, 'richi', address_tbl(
+        address_rec('Block C', '3', 'Vaishnov devi', 382421)
+    ));
+
+
+
+BEGIN
+    manage_teacher_address(1, 'UPDATE', 1, 'Block D', '1A', 'Nikol', 382401);
+END;
+/
+BEGIN
+    manage_teacher_address(1, 'INSERT', NULL, 'Block K', '4', 'Narol', 382142);
+END;
+/
+BEGIN
+    manage_teacher_address(2, 'DELETE', 1);  
+END;
+/
+
+
+EXEC manage_teacher_address(1, 'UPDATE', 1, 'Block D', '1A', 'Nikol', 382401);
+EXEC manage_teacher_address(1, 'INSERT', NULL, 'Block K', '4', 'Narol', 382142);
+EXEC manage_teacher_address(2, 'DELETE', 1);  

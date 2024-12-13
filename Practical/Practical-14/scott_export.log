@@ -1,0 +1,4 @@
+
+EXP-00056: ORACLE error 12154 encountered
+ORA-12154: TNS:could not resolve the connect identifier specified
+EXP-00000: Export terminated unsuccessfully

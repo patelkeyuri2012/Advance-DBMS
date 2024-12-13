@@ -1,0 +1,25 @@
+Practical-7
+-----------
+- Write a query to find out sort area contention in data base and give right solution as a dba.
+
+SELECT 
+    m.name, d.name, m.value / (m.value + d.value) AS "sort ratio"
+FROM 
+    v$sysstat m, 
+    v$sysstat d
+WHERE 
+    m.name = 'sorts (memory)'
+AND 
+    d.name = 'sorts (disk)';
+
+SELECT 
+    ROUND(m.value / (m.value + d.value), 2) AS "Sort Area Contention Hit Ratio"
+FROM 
+    v$sysstat m,
+    v$sysstat d
+WHERE 
+    m.name = 'sorts (memory)' 
+    AND d.name = 'sorts (disk)';
+
+
+

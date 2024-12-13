@@ -1,0 +1,64 @@
+Practical-13
+------------
+- With the use of DBMS_DDL package analyz table , index and cluster in your schema. 
+
+create table dept(
+    id number primary key,
+    dept_nm varchar(20)
+);
+
+create index idx on dept(dept_nm);
+
+insert into dept values(1,'computer-science');
+
+insert into dept values(2,'hindi');
+
+create cluster bookclt(std_id number)
+storage(initial 200
+        next 300k
+        minextents 2
+        maxextents 200);
+
+create table students(
+std_id number,
+name varchar(20)
+)cluster bookclt(std_id);
+
+create table books(
+book_id  number primary key,
+std_id number,
+book_name varchar(20)
+)cluster bookclt(std_id);
+
+create index cltidx on cluster bookclt;
+
+   
+insert into students values(1,'keyuri');
+insert into students values(2,'yashvi');
+
+insert into books values(1,1,'maths');
+insert into books values(2,2,'english');
+
+
+BEGIN
+   DBMS_STATS.GATHER_TABLE_STATS('MCA307', 'DEPT');
+   DBMS_STATS.GATHER_INDEX_STATS('MCA307', 'IDX');
+   DBMS_STATS.GATHER_SCHEMA_STATS('MCA307');
+END;
+/
+
+
+ANALYZE TABLE DEPT COMPUTE STATISTICS;
+
+ANALYZE INDEX IDX COMPUTE STATISTICS;
+
+ANALYZE CLUSTER bookclt COMPUTE STATISTICS;
+
+SELECT 
+    CLUSTER_NAME,
+   TABLESPACE_NAME ,
+   PCT_FREE ,
+    PCT_USED
+    FROM 
+    USER_CLUSTERS
+WHERE CLUSTER_NAME='BOOKCLT';

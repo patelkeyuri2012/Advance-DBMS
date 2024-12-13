@@ -1,0 +1,14 @@
+Practical-3
+-----------
+- Write a query to identify latch contention in the database and format output for better understanding.
+
+
+SELECT 
+    name, gets, misses, sleeps, immediate_gets, immediate_misses 
+FROM 
+    v$latch 
+WHERE 
+    name like 'shared pool' OR name like '%library cache%' OR name like '%redo log%' OR name like '%cache buffer%';
+
+select m.value/(m.value+d.value) "sort ratio" from v$sysstat m, v$sysstat d where m.name='sorts (memory)' and d.name='sorts (disk)';
+

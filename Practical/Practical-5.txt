@@ -1,0 +1,23 @@
+Practical-4
+-----------
+- Write query to find out hit ratio for the data buffer cache and write your conclusion.​
+ 
+SELECT
+  (1 - (v3.value / (v1.value + v2.value))) * 100 AS data_buffer_cache_hit_ratio
+FROM 
+  v$sysstat v1,
+  v$sysstat v2,
+  v$sysstat v3
+WHERE 
+  v1.name = 'db block gets'
+AND 
+  v2.name = 'consistent gets'
+AND  
+  v3.name = 'physical reads';
+
+
+
+
+				 
+Conclusion: A hit ratio of data buffer cache (above 95%) indicates that the cache is effective. The hit ratio for the data buffer cache  should be > 95%. 
+            If it is less than 95% then we need to resize the database buffer cache.

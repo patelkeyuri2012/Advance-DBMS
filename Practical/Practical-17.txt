@@ -1,0 +1,84 @@
+Practical-16
+------------
+- Implement dynamic sql using DBMS_SQL package.
+
+
+create or replace procedure manage_employee(p_operation in varchar2, p_empid in number, p_empnm in varchar2) is
+  v_sql varchar2(100);
+  v_cursor integer;
+  v_tablenm varchar2(50) := 'employees';
+  v_bindid number := p_empid;
+  v_bindnm varchar2(50) := p_empnm;
+begin
+  if p_operation = 'INSERT' then
+    v_sql := 'insert into ' || v_tablenm || ' (EMPLOYEE_ID, EMPLOYEE_NAME) values (:bindid, :bindnm)';
+    v_cursor := DBMS_SQL.open_cursor;
+    DBMS_SQL.parse(v_cursor, v_sql, DBMS_SQL.native);
+    DBMS_SQL.bind_variable(v_cursor, ':bindid', v_bindid);
+    DBMS_SQL.bind_variable(v_cursor, ':bindnm', v_bindnm);
+    DBMS_SQL.execute(v_cursor);
+    DBMS_SQL.close_cursor(v_cursor);
+    DBMS_OUTPUT.PUT_LINE('Record inserted successfully');
+  elsif p_operation = 'update' then
+    v_sql := 'update ' || v_tablenm || ' set EMPLOYEE_NAME = :bindnm where EMPLOYEE_ID = :bindid';
+    v_cursor := DBMS_SQL.open_cursor;
+    DBMS_SQL.parse(v_cursor, v_sql, DBMS_SQL.native);
+    DBMS_SQL.bind_variable(v_cursor, ':bindid', v_bindid);
+    DBMS_SQL.bind_variable(v_cursor, ':bindnm', v_bindnm);
+    DBMS_SQL.execute(v_cursor);
+    DBMS_SQL.close_cursor(v_cursor);
+    DBMS_OUTPUT.PUT_LINE('Record updated successfully');
+  elsif p_operation = 'delete' then
+    v_sql := 'delete from ' || v_tablenm || ' where EMPLOYEE_ID = :bindid';
+    v_cursor := DBMS_SQL.open_cursor;
+    DBMS_SQL.parse(v_cursor, v_sql, DBMS_SQL.native);
+    DBMS_SQL.bind_variable(v_cursor, ':bindid', v_bindid);
+    DBMS_SQL.execute(v_cursor);
+    DBMS_SQL.close_cursor(v_cursor);
+    DBMS_OUTPUT.PUT_LINE('Record deleted successfully');
+  else
+    DBMS_OUTPUT.PUT_LINE('Invalid operation. Please choose INSERT, UPDATE, or DELETE.');
+  end if;
+end;
+/
+
+
+create or replace procedure fetch_data(pid in number, eid out number, pnm out varchar2) is
+  v_sql varchar2(200);
+  v_cursor integer;
+  v_empid number;
+  v_empnm varchar2(50);
+begin
+  v_sql := 'select EMPLOYEE_ID, EMPLOYEE_NAME from EMPLOYEES where EMPLOYEE_ID = :bindid';
+  v_cursor := DBMS_SQL.open_cursor;
+  DBMS_SQL.parse(v_cursor, v_sql, DBMS_SQL.native);
+  DBMS_SQL.bind_variable(v_cursor, ':bindid', pid);
+  DBMS_SQL.define_column(v_cursor, 1, v_empid);
+  DBMS_SQL.define_column(v_cursor, 2, v_empnm);
+  DBMS_SQL.execute(v_cursor);
+  if DBMS_SQL.fetch_rows(v_cursor) > 0 then
+    DBMS_SQL.column_value(v_cursor, 1, eid);
+    DBMS_SQL.column_value(v_cursor, 2, pnm);
+  else
+    DBMS_OUTPUT.PUT_LINE('No data found for EMPLOYEE_ID: ' || pid);
+  end if;
+  DBMS_SQL.close_cursor(v_cursor);
+end;
+/
+
+
+DECLARE
+    emp_name VARCHAR2(100);
+    empid number;
+BEGIN
+    fetch_data(1000, empid, emp_name);
+    DBMS_OUTPUT.PUT_LINE('Employee ID: ' || empid); 
+    DBMS_OUTPUT.PUT_LINE('Employee Name: ' || emp_name); 
+    
+    manage_employee('INSERT', 1001, 'Keyuri Patel');
+    manage_employee('UPDATE', 1001, 'Mohan Bhatt');
+    manage_employee('DELETE', 1001, 'Yuva Shah');
+END;
+/
+
+

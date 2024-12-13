@@ -1,0 +1,8 @@
+Practical-15
+------------
+- Find out database fragmentation, show fragmentation by more than one method and give minimum three solutions to resolve it. 
+
+Repeat fragmentation queries from step 1 and consider the following solutions:
+1. Coalesce free space.
+2. Rebuild indexes.
+3. Move or reorganize tables.
